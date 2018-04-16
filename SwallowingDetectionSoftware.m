@@ -405,6 +405,7 @@ end
           TabHandles{NumberOfTabs+3,2}.Visible='on';
        d=allchild(gca)
         delete(d);
+        axis off;
         
     end
     
