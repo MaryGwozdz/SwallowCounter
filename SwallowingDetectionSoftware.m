@@ -17,7 +17,7 @@ function SwallowingDetectionSoftware
 %   Set Number of tabs and tab labels.  Make sure the number of tab labels
 %   match the HumberOfTabs setting.
         NumberOfTabs = 3;               % Number of tabs to be generated
-        TabLabels = {'Start Count'; 'Swallow Count'; 'Review Recordings'};
+        TabLabels = {'Start Count'; 'Swallow History'; 'Review Recordings'};
         if size(TabLabels,1) ~= NumberOfTabs
             errordlg('Number of tabs and tab labels must be the same','Setup Error');
             return
@@ -119,7 +119,7 @@ function SwallowingDetectionSoftware
             'Select below to open a sound file to count swallows.';...
             ' ';...
             'Please be patient while waiting for the neural network to load.';};
-        
+         
     %   Display it - Put the handle in TabHandles so that it can be deleted later 
         TabHandles{NumberOfTabs+3,1} = uicontrol('Style', 'text',... % 3rd item to be added to Tab Handles
             'Position', [ round(PanelWidth/4) 3*ButtonHeight ...
@@ -136,20 +136,79 @@ function SwallowingDetectionSoftware
 
 
 %   Build default text for the Image tab
-        Intro = {'Use the Open Image Tab to display an image here'};
+        Intro = {'Swallow History'};
 
     %   Display it - Put the handle in TabHandles so that it can be deleted later 
-        TabHandles{NumberOfTabs+2,1} = uicontrol('Style', 'text',...
-            'Position', [ round(PanelWidth/4) 3*ButtonHeight ...
-                round(PanelWidth/2) round(PanelHeight/2) ],...
+        
+       oldfolder=cd(getenv('USERPROFILE'));
+        mkdir 'WavFiles';
+        cd('WavFiles');
+        wavcell=struct2cell(dir('*.wav'));
+        filename=wavcell(1,:);
+        directory=wavcell(2,:);
+      
+        timedate=categorical(cellstr(wavcell(3,:)));
+        cd(oldfolder);
+      
+        NumSwallows=[];
+   
+        for i=1:size(filename,2)
+            
+            WavFilePath=fullfile(cell2mat(wavcell(2,i)),cell2mat(wavcell(1,i)));
+            
+      [audio, ~] = audioread(WavFilePath);
+       %   Setup sound file for neural network
+        sInput = setupSoundFileForNN(audio);
+        
+    %   Load NN and saved swallowCount
+        load TMnet.mat
+        
+        
+    %   Use NN to determine swallows in the sample
+        sOutput = net(sInput);
+      
+    %   Determine the number of swallows in the sample
+       
+        NumSwallows(end+1)=sum(round(sOutput));
+       
+    %   Add this count to the existing count and save it
+        
+        
+        
+        end
+      
+ TopPlotOffset = 40;
+        MidPlotOffset = 50;
+      
+        BottomPlotOffset = 50;
+        haxes2 = axes('Parent', TabHandles{2,1}, ...
+            'Units', 'pixels', ...
+            'Position', [TopPlotOffset BottomPlotOffset PanelWidth-2*MidPlotOffset PanelHeight-3*TopPlotOffset]);
+       
+       bar(timedate,NumSwallows);
+       TabHandles{NumberOfTabs+2,1}= uicontrol('Style', 'text',...
+            'Position', [ round((PanelWidth-ButtonWidth)/2) PanelHeight-round(1.5*ButtonHeight) ...
+                ButtonWidth ButtonHeight ],...
             'Parent', TabHandles{2,1}, ...
             'string', Intro,...
             'BackgroundColor', White,...
             'HorizontalAlignment', 'center',...
             'FontName', 'arial',...
             'FontWeight', 'bold',...
-            'FontSize', 14);
-	   
+            'FontSize', 12);
+       
+         swallowstring=strcat({'Total swallows since '},cellstr(timedate(1)),{' = '},num2str(sum(NumSwallows)));
+         
+        TabHandles{NumberOfTabs+2,1}= uicontrol('Style', 'text',...
+            'Position', [ round((PanelWidth-ButtonWidth*1.5)/2) PanelHeight-round(4.5*ButtonHeight/2) ...
+                ButtonWidth*1.5 ButtonHeight/2 ],...
+            'Parent', TabHandles{2,1}, ...
+            'string',swallowstring ,...
+            'BackgroundColor', BGColor,...
+            'HorizontalAlignment', 'center',...
+            'FontName', 'arial',...
+            'FontWeight', 'bold',...
+            'FontSize', 12);
 %%   Define View Past Recordings Tab content
     % Make a uicontrol that is a table that pulls the saved wav files from
     % the folder for step 1
@@ -294,7 +353,7 @@ end
         sInput = setupSoundFileForNN(y);
         
     %   Load NN and saved swallowCount
-        load net.mat
+        load TMnet.mat
         load swallows.mat
         
     %   Use NN to determine swallows in the sample
@@ -331,13 +390,22 @@ end
         
         % Make wav vector have correct number of elements for reshape
         extra = mod(length(y),valsPerTrial);
-        y = y(1:end-extra);
+    
+     endofy=length(y)-extra;
+        ynoextra=y(1:endofy);
+       
+    
+       
         
-        numTrials = length(y)/valsPerTrial;
-
+        numTrials = (length(ynoextra)/valsPerTrial);
+        
+       
         % Make input array from a single wav file
+     
+ 
         input = zeros(valsPerTrial, numTrials);
-        input(:,1:numTrials) = reshape(y, [valsPerTrial,numTrials]);
+       
+        input(:,1:numTrials) = reshape(ynoextra, [valsPerTrial,numTrials]);
         
         % Perform FFT as pre-processing
         output = abs(fft(input));
@@ -403,7 +471,7 @@ end
     NumberOfTabs = size(TabHandles,1)-3;
     TabHandles{NumberOfTabs+3,3}.Visible='on';
           TabHandles{NumberOfTabs+3,2}.Visible='on';
-       d=allchild(gca)
+       d=allchild(gca);
         delete(d);
         axis off;
         
