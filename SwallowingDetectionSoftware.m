@@ -43,6 +43,9 @@ function SwallowingDetectionSoftware
  %   Set the color varables.  
         White = [1  1  1];            % White - Selected tab color     
         BGColor = .9*White;           % Light Grey - Background color
+        
+      
+        
             
 %%   Create a figure for the tabs
         hTabFig = figure(...
@@ -59,7 +62,7 @@ function SwallowingDetectionSoftware
 %%   Define a cell array for panel and pushbutton handles, pushbuttons labels and other data
     %   rows are for each tab + two additional rows for other data
     %   columns are uipanel handles, selection pushbutton handles, and tab label strings - 3 columns.
-            TabHandles = cell(NumberOfTabs,3);
+            TabHandles = cell(NumberOfTabs,4);
             TabHandles(:,3) = TabLabels(:,1);
     %   Add additional rows for other data
             TabHandles{NumberOfTabs+1,1} = hTabFig;         % Main figure handle
@@ -133,7 +136,8 @@ function SwallowingDetectionSoftware
             'FontSize', 14);
     
 %%   Define default content for the Swallow Count Tab
-
+  timedate=[];
+        NumSwallows=[];
 
 %   Build default text for the Image tab
         Intro = {'Swallow History'};
@@ -184,7 +188,22 @@ function SwallowingDetectionSoftware
         haxes2 = axes('Parent', TabHandles{2,1}, ...
             'Units', 'pixels', ...
             'Position', [TopPlotOffset BottomPlotOffset PanelWidth-2*MidPlotOffset PanelHeight-3*TopPlotOffset]);
-       
+       timedate
+       NumSwallows
+       if isempty(NumSwallows) == 1
+           
+           TabHandles{NumberOfTabs+2,1}= uicontrol('Style', 'text',...
+            'Position', [ round((PanelWidth-ButtonWidth*1.5)/2) PanelHeight-round(4.5*ButtonHeight/2) ...
+                ButtonWidth*1.5 ButtonHeight/2 ],...
+            'Parent', TabHandles{2,1}, ...
+            'string','No swallows' ,...
+            'BackgroundColor', BGColor,...
+            'HorizontalAlignment', 'center',...
+            'FontName', 'arial',...
+            'FontWeight', 'bold',...
+            'FontSize', 12);
+           
+       else   
        bar(timedate,NumSwallows);
        TabHandles{NumberOfTabs+2,1}= uicontrol('Style', 'text',...
             'Position', [ round((PanelWidth-ButtonWidth)/2) PanelHeight-round(1.5*ButtonHeight) ...
@@ -209,6 +228,7 @@ function SwallowingDetectionSoftware
             'FontName', 'arial',...
             'FontWeight', 'bold',...
             'FontSize', 12);
+       end
 %%   Define View Past Recordings Tab content
     % Make a uicontrol that is a table that pulls the saved wav files from
     % the folder for step 1
@@ -453,7 +473,7 @@ end
             'Position', [TopPlotOffset BottomPlotOffset PanelWidth-2*MidPlotOffset PanelHeight-2*TopPlotOffset]);
         scrollplot(plot(haxes2, t,y)); xlabel('Seconds'); ylabel('Amplitude');
         ButtonHeight = 40;
-     TabHandles{NumberOfTabs+4,3}=uicontrol('Parent', TabHandles{3,1}, ...
+     TabHandles{NumberOfTabs,4}=uicontrol('Parent', TabHandles{3,1}, ...
             'Units', 'pixels', ...
             'Position', [round(PanelWidth/2)+140 (2*ButtonHeight)-50 200 ButtonHeight], ...
             'String', 'Back', ...
@@ -469,11 +489,14 @@ end
     function BackButtonCallback(~,~)
     TabHandles = guidata(gcf);
     NumberOfTabs = size(TabHandles,1)-3;
+    TabHandles
     TabHandles{NumberOfTabs+3,3}.Visible='on';
           TabHandles{NumberOfTabs+3,2}.Visible='on';
+      TabHandles{NumberOfTabs,4}.Visible='off';    
        d=allchild(gca);
-        delete(d);
+        d.Visible='off';
         axis off;
+        
         
     end
     
