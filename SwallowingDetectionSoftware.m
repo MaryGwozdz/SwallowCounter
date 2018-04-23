@@ -6,7 +6,7 @@ function SwallowingDetectionSoftware
 %   of the figure.  The program uses the ~ character for unused arguments,
 %   so if you are not using 2009b, these should be changed to dummy
 %   arguments (lines 209 and 233). guidata is set to the TabHandles cell
-%   array and is used to pass all arguments and data to the functions.
+%   array and is used to pass allrguments and data to the functions.
 
 %%   Set up some varables
 %   First clear everything
@@ -188,8 +188,7 @@ function SwallowingDetectionSoftware
         haxes2 = axes('Parent', TabHandles{2,1}, ...
             'Units', 'pixels', ...
             'Position', [TopPlotOffset BottomPlotOffset PanelWidth-2*MidPlotOffset PanelHeight-3*TopPlotOffset]);
-       timedate
-       NumSwallows
+       
        if isempty(NumSwallows) == 1
            
            TabHandles{NumberOfTabs+2,1}= uicontrol('Style', 'text',...
@@ -427,6 +426,12 @@ end
        
         input(:,1:numTrials) = reshape(ynoextra, [valsPerTrial,numTrials]);
         
+%         for i=1:numTrials
+%             if max(input((i-1)*valsPerTrial+1:i*valsPerTrial)) <= 0.05
+%                input((i-1)*valsPerTrial+1:i*valsPerTrial)=0;
+%             end   
+%         end     
+            
         % Perform FFT as pre-processing
         output = abs(fft(input));
     end
@@ -489,7 +494,6 @@ end
     function BackButtonCallback(~,~)
     TabHandles = guidata(gcf);
     NumberOfTabs = size(TabHandles,1)-3;
-    TabHandles
     TabHandles{NumberOfTabs+3,3}.Visible='on';
           TabHandles{NumberOfTabs+3,2}.Visible='on';
       TabHandles{NumberOfTabs,4}.Visible='off';    
